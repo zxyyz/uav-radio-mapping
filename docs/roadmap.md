@@ -14,7 +14,7 @@
 
 ## 论文算法重构范围
 
-按 *Prototype of Joint CKM and 3D Environment Reconstruction System via UAV RF Measurements* 重新组织算法实现：
+按 [*Prototype of Joint CKM and 3D Environment Reconstruction System via UAV RF Measurements*](papers/Prototype_of_Joint_CKM_and_3D_Environment_Reconstruction_System_via_UAV_RF_Measurements.pdf) 重新组织算法实现：
 
 1. 式 (3)、(6)–(8)：每基站 LoS/NLoS 路径损耗模型、高斯似然与链路状态判决。
 2. 式 (1)、(4)：二维建筑占据表示、视线相交和最低相交高度。

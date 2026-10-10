@@ -4,7 +4,7 @@
 
 ## 研究基础
 
-已有论文标题为 *Prototype of Joint CKM and 3D Environment Reconstruction System via UAV RF Measurements*，作者为 Chaoyue Zhang、Zhiwen Zhou、Di Wu、Shiqi Zeng、Xiaoli Xu、Yong Zeng、Zaichen Zhang 和 Yongming Huang。研究将无人机通信过程中取得的 RF 测量同时用于构建 Channel Knowledge Map（CKM）和估计三维楼房高度。
+已有论文标题为 [*Prototype of Joint CKM and 3D Environment Reconstruction System via UAV RF Measurements*](papers/Prototype_of_Joint_CKM_and_3D_Environment_Reconstruction_System_via_UAV_RF_Measurements.pdf)，作者为 Chaoyue Zhang、Zhiwen Zhou、Di Wu、Shiqi Zeng、Xiaoli Xu、Yong Zeng、Zaichen Zhang 和 Yongming Huang。研究将无人机通信过程中取得的 RF 测量同时用于构建 Channel Knowledge Map（CKM）和估计三维楼房高度。
 
 系统输入为二维建筑轮廓、基站三维位置、无人机三维位置及 RSRP。论文采用 LoS/NLoS 的高斯路径损耗假设检验，结合无人机—基站视线与建筑轮廓的相交高度，更新楼高概率分布。
 

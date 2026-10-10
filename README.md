@@ -4,6 +4,8 @@
 
 本项目延续 *Prototype of Joint CKM and 3D Environment Reconstruction System via UAV RF Measurements* 的实验基础。计划使用 DJI Matrice 400（M400）完成区域测绘，建立建筑几何地图，再在同一区域巡航，联合记录 4G 信道测量、三维位置和时间，按论文算法重构楼房高度并验证效果。目标是轻量、可复现的开源实验系统。
 
+论文稿件：[Prototype of Joint CKM and 3D Environment Reconstruction System via UAV RF Measurements（PDF）](docs/papers/Prototype_of_Joint_CKM_and_3D_Environment_Reconstruction_System_via_UAV_RF_Measurements.pdf)。后续算法重构以此稿件为依据。
+
 **当前阶段：项目初始化与本地几何数据库。** 已实现 SQLite 数据库初始化、ENU 建筑模型导入/导出、地图版本管理、包围盒空间查询及合成示例。M400 对接、点云处理、实时采集与回放、论文算法重构属于后续开发阶段。
 
 ## 快速开始
@@ -65,6 +67,7 @@ flowchart LR
 | 路径 | 用途 |
 | --- | --- |
 | `src/uav_radio_mapping/` | 标准库 CLI、SQLite 模式与几何模型存储 |
+| `docs/papers/` | 原型论文稿件 |
 | `docs/background.md` | 原型工作与现有资料梳理 |
 | `docs/architecture.md` | 轻量系统结构与本地存储布局 |
 | `docs/data-contract.md` | 坐标、时间、几何与测量约定 |
@@ -74,6 +77,6 @@ flowchart LR
 | `data/` | 本地数据库、原始点云、日志与输出，Git 忽略 |
 | `local/` | 本机来源路径、资料索引与本地配置，Git 忽略 |
 
-只发布新代码、文档和合成数据。既有论文文件、地图瓦片、硬件设计与实测数据保留本地，按需另行整理可发布的数据集。新仓库代码采用 [MIT License](LICENSE)，不改变既有材料的权利归属。
+仓库发布新代码、文档、合成数据和原型论文稿件。地图瓦片、硬件设计与实测数据保留本地，按需另行整理可发布的数据集。新仓库代码采用 [MIT License](LICENSE)；论文稿件保留原有版权，不适用代码的 MIT 许可。
 
 English: a lightweight, local-first UAV radio mapping project. The initial release provides a dependency-free SQLite geometry store and synthetic examples. Planned work covers DJI M400 mapping and patrol, synchronized LTE measurements, live visualization/replay, and paper-based building-height reconstruction validated against LiDAR geometry.
