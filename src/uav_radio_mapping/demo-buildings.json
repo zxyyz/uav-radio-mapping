@@ -1,0 +1,22 @@
+{
+  "format_version": 1,
+  "site": {
+    "site_id": "synthetic-site",
+    "name": "Synthetic geometry demo (not a surveyed area)",
+    "origin_lon_deg": 0.0,
+    "origin_lat_deg": 0.0,
+    "origin_alt_m": 0.0,
+    "vertical_datum": "WGS84_ellipsoidal",
+    "frame": "ENU"
+  },
+  "map": {
+    "map_id": "synthetic-v1",
+    "role": "synthetic",
+    "provenance": {"source": "hand-authored synthetic blocks", "is_ground_truth": false}
+  },
+  "buildings": [
+    {"building_id": "A", "footprint_xy_m": [[10, 10], [30, 10], [30, 25], [10, 25], [10, 10]], "base_z_m": 0, "height_m": 20},
+    {"building_id": "B", "footprint_xy_m": [[45, 15], [65, 15], [65, 35], [45, 35], [45, 15]], "base_z_m": 0, "height_m": 35},
+    {"building_id": "C", "footprint_xy_m": [[20, 50], [50, 50], [50, 65], [20, 65], [20, 50]], "base_z_m": 1.5, "height_m": 12}
+  ]
+}

@@ -1,0 +1,79 @@
+# UAV Radio Mapping
+
+基于无人机蜂窝信道测量的三维楼房地图重构，使用激光点云建模作为评估真值。
+
+本项目延续 *Prototype of Joint CKM and 3D Environment Reconstruction System via UAV RF Measurements* 的实验基础。计划使用 DJI Matrice 400（M400）完成区域测绘，建立建筑几何地图，再在同一区域巡航，联合记录 4G 信道测量、三维位置和时间，按论文算法重构楼房高度并验证效果。目标是轻量、可复现的开源实验系统。
+
+**当前阶段：项目初始化与本地几何数据库。** 已实现 SQLite 数据库初始化、ENU 建筑模型导入/导出、地图版本管理、包围盒空间查询及合成示例。M400 对接、点云处理、实时采集与回放、论文算法重构属于后续开发阶段。
+
+## 快速开始
+
+要求 Python 3.10+，SQLite 支持 RTree。核心运行使用 Python 标准库，无需数据库服务器、ROS 或容器。
+
+```bash
+git clone https://github.com/zxyyz/uav-radio-mapping.git
+cd uav-radio-mapping
+
+# 创建实际实验用的空数据库
+python3 run.py init
+python3 run.py status
+
+# 在独立数据库中运行合成示例：3 栋楼房，不代表真实测绘结果
+python3 run.py --db data/geometry/demo.sqlite3 demo
+python3 run.py --db data/geometry/demo.sqlite3 buildings synthetic-v1 --bbox 0 0 40 40
+python3 run.py --db data/geometry/demo.sqlite3 export-buildings synthetic-v1 data/derived/demo-buildings.json
+```
+
+默认数据库为 `data/geometry/maps.sqlite3`。`--db` 放在子命令前；路径相对于执行命令时的当前目录。同一地图重复导入不会产生重复记录；修改模型时应使用新的 `map_id`。
+
+导入自有建筑模型：
+
+```bash
+python3 run.py import-buildings path/to/buildings.json
+```
+
+输入格式参考 [合成模型](src/uav_radio_mapping/demo-buildings.json) 和 [数据约定](docs/data-contract.md)。使用以 WGS84 椭球高原点定义的局部 ENU 米制坐标；当前版本不负责点云提取或坐标转换。
+
+测试与可选安装：
+
+```bash
+python3 -m unittest discover -s tests -v
+# 若需要 uav-map 命令，可在自己的虚拟环境中安装
+python3 -m pip install -e .
+```
+
+## 实验流程
+
+```mermaid
+flowchart LR
+    A[M400 + 激光测绘载荷] --> B[区域点云]
+    B --> C[楼房几何真值]
+    D[二维建筑轮廓] --> H[论文算法重构]
+    E[M400 区域巡航] --> F[4G 测量 + 三维定位 + UTC 时间]
+    F --> G[本机数据库]
+    G --> I[实时显示与回放]
+    G --> H
+    H --> J[重构楼房模型]
+    C --> K[统一坐标下评估]
+    J --> K
+```
+
+初期几何模型为“二维多边形轮廓 + 地面基底高程 + 楼高”的挤出体。激光真值、二维先验与 RF 重构使用独立地图版本；重构输入不含真值楼高。M400 飞行平台与激光测绘载荷分别配置，对接方式在硬件集成阶段确定。
+
+## 仓库内容
+
+| 路径 | 用途 |
+| --- | --- |
+| `src/uav_radio_mapping/` | 标准库 CLI、SQLite 模式与几何模型存储 |
+| `docs/background.md` | 原型工作与现有资料梳理 |
+| `docs/architecture.md` | 轻量系统结构与本地存储布局 |
+| `docs/data-contract.md` | 坐标、时间、几何与测量约定 |
+| `docs/roadmap.md` | 后续开发阶段与验收目标 |
+| `docs/experiment-protocol.md` | 测绘、巡航、重构及真值评估流程 |
+| `tests/` | 数据完整性、空间查询与 CLI 测试 |
+| `data/` | 本地数据库、原始点云、日志与输出，Git 忽略 |
+| `local/` | 本机来源路径、资料索引与本地配置，Git 忽略 |
+
+只发布新代码、文档和合成数据。既有论文文件、地图瓦片、硬件设计与实测数据保留本地，按需另行整理可发布的数据集。新仓库代码采用 [MIT License](LICENSE)，不改变既有材料的权利归属。
+
+English: a lightweight, local-first UAV radio mapping project. The initial release provides a dependency-free SQLite geometry store and synthetic examples. Planned work covers DJI M400 mapping and patrol, synchronized LTE measurements, live visualization/replay, and paper-based building-height reconstruction validated against LiDAR geometry.
