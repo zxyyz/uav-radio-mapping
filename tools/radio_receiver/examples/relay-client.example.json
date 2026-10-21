@@ -1,0 +1,7 @@
+{
+  "relay_url": "https://relay.example.com:8878",
+  "relay_token": "CHANGE_ME_GENERATE_A_RANDOM_RELAY_TOKEN",
+  "ca_file": "relay-cert.pem",
+  "local_url": "http://127.0.0.1:8787",
+  "local_token": "CHANGE_ME_GENERATE_A_RANDOM_LOCAL_TOKEN"
+}

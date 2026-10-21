@@ -135,11 +135,11 @@ class GeometryStoreTests(unittest.TestCase):
 
     def test_foreign_database_is_not_reinitialized(self):
         other = Path(self.directory.name) / "other.sqlite3"
-        with sqlite3.connect(other) as conn:
+        with contextlib.closing(sqlite3.connect(other)) as conn, conn:
             conn.execute("CREATE TABLE original (value TEXT)")
         with self.assertRaisesRegex(ValueError, "version"):
             store.initialize(other)
-        with sqlite3.connect(other) as conn:
+        with contextlib.closing(sqlite3.connect(other)) as conn:
             names = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]
         self.assertEqual(names, ["original"])
 

@@ -4,9 +4,10 @@ permissions:
   contents: read
 jobs:
   unittest:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: ['ubuntu-latest', 'windows-latest']
         python: ['3.10', '3.13']
     steps:
       - uses: actions/checkout@v4

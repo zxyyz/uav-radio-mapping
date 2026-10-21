@@ -21,3 +21,13 @@ local/
 *.mcap
 *.log
 .DS_Store
+
+# Receiver credentials, certificates, installed payloads, and local UI output
+*.private.json
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+*.dpk
+tools/radio_receiver/*preview.png

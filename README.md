@@ -6,7 +6,9 @@
 
 论文稿件：[Prototype of Joint CKM and 3D Environment Reconstruction System via UAV RF Measurements（PDF）](docs/papers/Prototype_of_Joint_CKM_and_3D_Environment_Reconstruction_System_via_UAV_RF_Measurements.pdf)。后续算法重构以此稿件为依据。
 
-**当前阶段：项目初始化与本地几何数据库。** 已实现 SQLite 数据库初始化、ENU 建筑模型导入/导出、地图版本管理、包围盒空间查询及合成示例。M400 对接、点云处理、实时采集与回放、论文算法重构属于后续开发阶段。
+**当前阶段：本地几何数据库与无线测量接收。** 已实现 SQLite 几何存储、合成示例，以及无线 JSON 接收、HTTPS 中转暂存、电脑取回和 Windows 桌面控制。定位/实验原点条件不齐的测量先可靠暂存；接收成功不等于已导入标准观测表。点云处理、历史定位补齐、回放与论文算法重构仍待后续开发。
+
+接收程序和部署步骤见 [接收与中转说明](docs/radio-receiver.md)，源码位于 [`tools/radio_receiver/`](tools/radio_receiver/)。配置模板不含真实地址、认证密钥、采集记录或 DJI 应用凭据。
 
 ## 快速开始
 
@@ -74,9 +76,10 @@ flowchart LR
 | `docs/roadmap.md` | 后续开发阶段与验收目标 |
 | `docs/experiment-protocol.md` | 测绘、巡航、重构及真值评估流程 |
 | `tests/` | 数据完整性、空间查询与 CLI 测试 |
+| `tools/radio_receiver/` | 无线测量接收、中转、配置模板与 Windows 控制 |
 | `data/` | 本地数据库、原始点云、日志与输出，Git 忽略 |
 | `local/` | 本机来源路径、资料索引与本地配置，Git 忽略 |
 
 仓库发布新代码、文档、合成数据和原型论文稿件。地图瓦片、硬件设计与实测数据保留本地，按需另行整理可发布的数据集。新仓库代码采用 [MIT License](LICENSE)；论文稿件保留原有版权，不适用代码的 MIT 许可。
 
-English: a lightweight, local-first UAV radio mapping project. The initial release provides a dependency-free SQLite geometry store and synthetic examples. Planned work covers DJI M400 mapping and patrol, synchronized LTE measurements, live visualization/replay, and paper-based building-height reconstruction validated against LiDAR geometry.
+English: a lightweight, local-first UAV radio mapping project with a dependency-free SQLite geometry store, synthetic examples, and radio-packet reception/relay tools. Measurements without the required pose and site remain durably staged rather than being inserted with fabricated coordinates. Planned work covers point-cloud processing, replay, and paper-based building-height reconstruction validated against LiDAR geometry.

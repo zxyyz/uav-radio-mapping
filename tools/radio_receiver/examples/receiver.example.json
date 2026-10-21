@@ -1,0 +1,7 @@
+{
+  "host": "127.0.0.1",
+  "port": 8787,
+  "token": "CHANGE_ME_GENERATE_A_RANDOM_LOCAL_TOKEN",
+  "repository": "../..",
+  "data_directory": "../../data/radio_receiver"
+}

@@ -1,0 +1,8 @@
+{
+  "host": "0.0.0.0",
+  "port": 8878,
+  "token": "CHANGE_ME_GENERATE_A_RANDOM_RELAY_TOKEN",
+  "database": "../../data/radio_relay/queue.sqlite3",
+  "certificate": "relay-cert.pem",
+  "key": "relay-key.pem"
+}
