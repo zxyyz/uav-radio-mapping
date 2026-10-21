@@ -14,7 +14,7 @@ class ReceiverConfigTests(unittest.TestCase):
             config=directory/'receiver.private.json'
             config.write_text(json.dumps({'token':'synthetic-token-for-tests-only-000000','data_directory':'../data with spaces'}),encoding='utf-8-sig')
             result=load_config(config,path_fields=('data_directory',),tokens=('token',))
-            self.assertEqual(Path(result['data_directory']),Path(folder)/'data with spaces')
+            self.assertEqual(Path(result['data_directory']),(Path(folder)/'data with spaces').resolve())
     def test_configuration_templates_cannot_start_with_placeholder_tokens(self):
         examples=Path(__file__).resolve().parents[1]/'tools/radio_receiver/examples'
         for name,tokens in [('receiver.example.json',('token',)),('relay-client.example.json',('relay_token','local_token')),('relay-server.example.json',('token',))]:
