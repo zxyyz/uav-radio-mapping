@@ -1,6 +1,6 @@
 # 无线测量接收与服务器中转
 
-接收链路是原几何数据库之外的工具层：机载 JSON 上传 → 公网中转暂存 → 电脑主动取回 → 本机接收库 → 条件满足后导入标准观测表。Python 服务均使用标准库；Windows 桌面控制额外使用系统自带的 PowerShell 和 WinForms。
+接收链路是原几何数据库之外的工具层：机载 JSON 上传 → 服务器长期保存 → 电脑主动同步 → 本机接收库 → 条件满足后导入标准观测表。也支持空间有限服务器的回执删除中转模式。Python 服务均使用标准库；Windows 桌面控制额外使用系统自带的 PowerShell 和 WinForms。
 
 ## 接收和导入是两个阶段
 
@@ -31,13 +31,13 @@ observations[]:
 
 ## 本机配置
 
-从 `tools/radio_receiver/examples/` 复制 `receiver.example.json` 和 `relay-client.example.json` 到 `local/radio_receiver/`，改名为对应的 `*.private.json`。用以下命令生成两个不同的随机 token，分别用于本机接收与公网中转：
+从 `tools/radio_receiver/examples/` 复制 `receiver.example.json` 和 `sync-client.example.json` 到 `local/radio_receiver/`，分别改名为 `receiver.private.json` 和 `relay-client.private.json`。用以下命令生成两个不同的随机 token，分别用于本机接收与服务器：
 
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
-本机 token 同时填入 receiver 的 `token` 和 client 的 `local_token`；公网 token 同时填入 relay-server 的 `token`、client 的 `relay_token` 和机载私有上传配置。主机地址、证书和密钥不随源码发布。
+本机 token 同时填入本机 receiver 的 `token` 和 client 的 `local_token`；服务器 token 同时填入服务器 receiver 的 `token`、client 的 `relay_token` 和机载私有上传配置。主机地址、证书和密钥不随源码发布。
 
 配置路径相对配置文件所在目录解析，模板以 `local/radio_receiver` 为放置位置。自定义目录通过 `UAV_RADIO_CONFIG_DIR` 设置；直接启动服务时 `--config` 可指定配置文件。
 
@@ -52,7 +52,28 @@ python tools/radio_receiver/receiver_status.py
 python tools/radio_receiver/relay_status.py
 ```
 
-## 公网中转部署
+## 服务器长期保存与电脑同步
+
+服务器运行 `server.py`，配置数据持久化目录、仓库路径和独立 token。内网监听端点由反向代理提供公网 HTTPS；例如公网代理通过覆盖网络访问校内服务器，应用和数据库均放在校内。代理需转发 Authorization 请求头和完整 JSON 正文，正文上限至少 2 MiB。备份运行中的数据库使用 SQLite backup API。
+
+电脑配置 `mode: "sync"`，`relay_url` 填公网 HTTPS 根地址。机载仍向同一地址的 `POST /api/v1/radio/packets` 上传。使用公共 CA 证书时省略 `ca_file`，保留默认的证书及主机名校验。
+
+以下接口除 `/health` 外均要求 Bearer token：
+
+| 方法和路径 | 用途 |
+| --- | --- |
+| `POST /api/v1/radio/packets` | 校验并持久化上传包，重复内容幂等接收 |
+| `GET /api/v1/sync/status?after=N` | 服务器总包数及当前电脑游标之后待同步的包数、观测数、大小 |
+| `GET /api/v1/sync/packets?after=N&limit=5&server_id=UUID` | 按递增同步 ID 只读导出最多 5 包，数据库身份不匹配返回 409 |
+| `GET /status` | 接收库及标准表导入状态 |
+
+电脑先将完整包提交到本机 SQLite，确认 `accepted=true` 后才原子保存本机游标。断线或重启后继续同步，重放由接收端去重；每台电脑保留独立游标。切换到不同身份的服务器数据库会从头同步。恢复同一身份的较旧数据库备份时，管理员应一并重置电脑游标。游标损坏会报错，不能静默跳过数据。
+
+同步读取和游标更新均不会删除服务器数据，也不调用中转回执接口。窗口的“待同步”仅代表该电脑尚未取回的记录，0 包不代表服务器没有存档。真实定位不齐的记录在服务器和电脑均保留为待定位；合成测试记录单独入测试库。
+
+## 可选：空间有限的公网中转
+
+仅在需要电脑收取后删除服务器载荷时使用 `relay_server.py` 和 `relay-client.example.json`。客户端省略 `mode` 或指定 `"relay"`，按以下旧中转协议工作；不要将其指向长期保存的 `server.py`。
 
 准备 relay-server 私有配置、可验证的 TLS 证书和私钥。证书必须包含机载实际访问的域名或 IP SAN；私有 CA/自签证书的公开证书应同步到电脑与机载信任配置，不关闭证书或主机名验证。系统信任的证书可省略 client 的 `ca_file`。占位 token 会被拒绝。
 
@@ -79,7 +100,7 @@ python tools/radio_receiver/relay_server.py --config /path/to/relay-server.priva
 
 运行 `tools/radio_receiver/Install-Desktop.ps1` 创建桌面入口。可选 `-ConfigDirectory`、`-PythonExecutable`、`-ShortcutPath`；这些路径写进本机快捷方式，不进入源码。Python 需 3.10+。
 
-窗口显示服务器待传包数、采样数、大小和更新时间。查询在子进程中执行，失败显示未知，不能按 0 处理。启动后持续补收；最后一次收到新包后，成功查询为空累计至少 10 秒，自动停止接收与中转。新包、网络/写库/回执错误会重置计时；实际退出还包括网络与轮询耗时。自动停止后的新数据需再次点击启动收取。
+窗口显示待同步包数、采样数、大小和更新时间；永久模式另显示服务器存档包数。查询在子进程中执行，失败显示未知，不能按 0 处理。启动后持续补收；最后一次收到新包后，成功查询为空累计至少 10 秒，自动停止本机接收与同步进程。新包、网络/写库错误会重置计时；实际退出还包括网络与轮询耗时。自动停止后的新数据需再次点击启动收取。
 
 关闭窗口会终止本实例的接收、中转、状态查询和起停辅助进程，不留后台；安装器不配置无窗口自启动。PowerShell 仅管理脚本和配置路径匹配的进程；自动停止请求绑定当前 client PID，旧请求不能结束新一轮接收。
 
@@ -91,6 +112,6 @@ Linux/macOS 可直接使用 Python 命令，空队列确认后 client 自行退�
 python -m unittest discover -s tests -v
 ```
 
-接收测试覆盖事务接收、同包/观测去重、非法批次拒绝、合成标准表导入、离线保留、回执删除、磁盘回收、有限摘要、HTTP 本机写入失败不回执、队列统计和空队列判断。测试仅使用明确标记的合成包，所有数据库放在临时目录。
+接收测试覆盖事务接收、同包/观测去重、非法批次拒绝、合成标准表导入、永久同步保留载荷、游标恢复、数据库身份切换、本机失败不推进游标，以及旧中转的离线保留、回执删除、磁盘回收、有限摘要和空队列判断。测试仅使用明确标记的合成包，所有数据库放在临时目录。
 
 部署原型曾在 M400 + 妙算 3 + 外接 USB LTE 模块上验证真实收发、断开电脑接收后补收、重复发送、回执删除、桌面队列计数和窗口关闭退出。实测数据库和原始日志未发布，硬件实测不能代替对当前设备、运营商网络和部署配置的复测。机载 DJI SDK 工程及凭据不包含在这次接收工具提交中。

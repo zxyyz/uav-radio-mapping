@@ -6,7 +6,7 @@ import time
 from relay_client import RelayConnection
 parser=argparse.ArgumentParser();parser.add_argument('--output');args=parser.parse_args()
 base=Path(__file__).resolve().parent
-config=load_config(CONFIG_DIR/'relay-client.private.json', path_fields=('ca_file',), tokens=('relay_token','local_token'))
+config=load_config(CONFIG_DIR/'relay-client.private.json', path_fields=('ca_file','sync_cursor_file'), tokens=('relay_token','local_token'))
 try:
     status=RelayConnection(config).status()
     result={'ok':True,'queried_at_ns':str(time.time_ns()),'server':status} if args.output else status

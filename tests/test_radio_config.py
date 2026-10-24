@@ -17,7 +17,7 @@ class ReceiverConfigTests(unittest.TestCase):
             self.assertEqual(Path(result['data_directory']),(Path(folder)/'data with spaces').resolve())
     def test_configuration_templates_cannot_start_with_placeholder_tokens(self):
         examples=Path(__file__).resolve().parents[1]/'tools/radio_receiver/examples'
-        for name,tokens in [('receiver.example.json',('token',)),('relay-client.example.json',('relay_token','local_token')),('relay-server.example.json',('token',))]:
+        for name,tokens in [('receiver.example.json',('token',)),('relay-client.example.json',('relay_token','local_token')),('sync-client.example.json',('relay_token','local_token')),('relay-server.example.json',('token',))]:
             with self.subTest(name=name),self.assertRaises(ValueError):load_config(examples/name,tokens=tokens)
 
 if __name__=='__main__':unittest.main()

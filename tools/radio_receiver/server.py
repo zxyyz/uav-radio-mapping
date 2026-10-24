@@ -11,6 +11,8 @@ from pathlib import Path
 import sqlite3
 import sys
 import time
+import urllib.parse
+import uuid
 from runtime_config import REPO_ROOT, load_config
 
 FORMAT = 'uav-radio-mapping.radio.v1'
@@ -158,7 +160,16 @@ class Receiver:
                   role TEXT NOT NULL, pci INTEGER, arfcn INTEGER, rsrp_dbm REAL, rsrq_db REAL, rssi_dbm REAL, sinr_db REAL,
                   payload_json TEXT NOT NULL, PRIMARY KEY(device_id,sequence,slot),
                   FOREIGN KEY(device_id,sequence) REFERENCES observations(device_id,sequence));
+                CREATE TABLE IF NOT EXISTS sync_metadata (
+                  singleton INTEGER PRIMARY KEY CHECK(singleton=1), server_id TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS packet_sync_index (
+                  sync_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  packet_id TEXT UNIQUE NOT NULL REFERENCES packets(packet_id), observation_count INTEGER NOT NULL);
             ''')
+            conn.execute('INSERT OR IGNORE INTO sync_metadata VALUES (1,?)',(str(uuid.uuid4()),))
+            existing=conn.execute('SELECT p.packet_id,p.payload_json FROM packets p LEFT JOIN packet_sync_index i ON i.packet_id=p.packet_id WHERE i.packet_id IS NULL ORDER BY p.received_at_ns,p.packet_id').fetchall()
+            for ident,payload in existing:
+                conn.execute('INSERT INTO packet_sync_index(packet_id,observation_count) VALUES (?,?)',(ident,len(json.loads(payload)['observations'])))
 
     @contextmanager
     def connect(self):
@@ -181,6 +192,8 @@ class Receiver:
                     raise Conflict('Packet ID reused with different content')
                 conn.execute('INSERT OR IGNORE INTO packets(packet_id,sha256,received_at_ns,payload_json) VALUES (?,?,?,?)',
                     (packet['packet_id'], digest(packet), time.time_ns(), canonical(packet)))
+                conn.execute('INSERT OR IGNORE INTO packet_sync_index(packet_id,observation_count) VALUES (?,?)',
+                    (packet['packet_id'],len(packet['observations'])))
                 for item in packet['observations']:
                     row = item['radio_observation']
                     identity = (row['device_id'], row['sequence'])
@@ -258,6 +271,25 @@ class Receiver:
         return dict(inbox=counts,pending_observations=pending,packet_states=states,
                     standard_database=self.store.status(self.core)['counts'],synthetic_database=self.store.status(self.synthetic)['counts'])
 
+    def sync_status(self,after=0):
+        if type(after) is not int or not 0<=after<2**63:raise ValueError('Invalid sync cursor')
+        with self.connect() as conn:
+            conn.execute('BEGIN')
+            server_id=conn.execute('SELECT server_id FROM sync_metadata WHERE singleton=1').fetchone()[0]
+            total,observations=conn.execute('SELECT COUNT(*),COALESCE(SUM(observation_count),0) FROM packet_sync_index').fetchone()
+            pending=conn.execute('SELECT COUNT(*),COALESCE(SUM(i.observation_count),0),COALESCE(SUM(length(CAST(p.payload_json AS BLOB))),0) FROM packet_sync_index i JOIN packets p ON p.packet_id=i.packet_id WHERE i.sync_id>?',(after,)).fetchone()
+        return dict(storage_mode='permanent',server_id=server_id,after=after,stored_packets=total,total_observations=observations,
+                    pending_packets=pending[0],pending_observations=pending[1],pending_bytes=pending[2])
+
+    def sync_packets(self,after=0,limit=5,server_id=None):
+        if type(after) is not int or not 0<=after<2**63 or type(limit) is not int or not 1<=limit<=5:raise ValueError('Invalid sync page')
+        with self.connect() as conn:
+            conn.execute('BEGIN')
+            current=conn.execute('SELECT server_id FROM sync_metadata WHERE singleton=1').fetchone()[0]
+            if server_id is not None and server_id!=current:raise Conflict('Sync server identity changed')
+            rows=conn.execute('SELECT i.sync_id,p.payload_json FROM packet_sync_index i JOIN packets p ON p.packet_id=i.packet_id WHERE i.sync_id>? ORDER BY i.sync_id LIMIT ?',(after,limit)).fetchall()
+        return dict(server_id=current,packets=[dict(sync_id=r[0],packet=json.loads(r[1])) for r in rows])
+
 
 def make_server(receiver, token, host, port):
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -271,7 +303,18 @@ def make_server(receiver, token, host, port):
             if self.path=='/health':
                 self.reply(200,dict(service='uav-radio-local-receiver',format=FORMAT));return
             if not self.authorized():self.reply(401,{'error':'authentication required'});return
-            if self.path=='/status':self.reply(200,receiver.status())
+            parsed=urllib.parse.urlsplit(self.path)
+            if parsed.path in ('/api/v1/sync/status','/api/v1/sync/packets'):
+                try:
+                    query=urllib.parse.parse_qs(parsed.query,keep_blank_values=True)
+                    if any(len(v)!=1 for v in query.values()):raise ValueError('Repeated sync parameter')
+                    after=int(query.get('after',['0'])[0])
+                    if parsed.path.endswith('/status'):self.reply(200,receiver.sync_status(after))
+                    else:self.reply(200,receiver.sync_packets(after,int(query.get('limit',['5'])[0]),query.get('server_id',[None])[0]))
+                except Conflict as error:self.reply(409,{'error':str(error)})
+                except ValueError as error:self.reply(400,{'error':str(error)})
+                except sqlite3.Error:self.reply(503,{'error':'receiver temporarily unavailable'})
+            elif self.path=='/status':self.reply(200,receiver.status())
             else:self.reply(404,{'error':'not found'})
         def do_POST(self):
             if not self.authorized():self.reply(401,{'error':'authentication required'});return

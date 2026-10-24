@@ -1,0 +1,8 @@
+{
+  "mode": "sync",
+  "relay_url": "https://receiver.example.com",
+  "relay_token": "CHANGE_ME_GENERATE_A_RANDOM_SERVER_TOKEN",
+  "sync_cursor_file": "sync-cursor.private.json",
+  "local_url": "http://127.0.0.1:8787",
+  "local_token": "CHANGE_ME_GENERATE_A_RANDOM_LOCAL_TOKEN"
+}

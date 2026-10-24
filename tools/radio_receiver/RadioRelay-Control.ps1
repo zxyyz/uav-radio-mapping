@@ -26,12 +26,12 @@ $title.Text='飞机数据接收';$title.Font=[System.Drawing.Font]::new('Microso
 $title.Location=[System.Drawing.Point]::new(28,22);$title.Size=[System.Drawing.Size]::new(490,45)
 $form.Controls.Add($title)
 $route=[System.Windows.Forms.Label]::new()
-$route.Text='飞机 → 中转服务器 → 本机数据库'
+$route.Text='飞机 → 服务器 → 本机数据库'
 $route.ForeColor=[System.Drawing.ColorTranslator]::FromHtml('#667085')
 $route.Location=[System.Drawing.Point]::new(30,76);$route.Size=[System.Drawing.Size]::new(490,28)
 $form.Controls.Add($route)
 $serverHeading=[System.Windows.Forms.Label]::new()
-$serverHeading.Text='服务器待传数据';$serverHeading.Location=[System.Drawing.Point]::new(30,120)
+$serverHeading.Text='服务器待同步到本机';$serverHeading.Location=[System.Drawing.Point]::new(30,120)
 $serverHeading.Size=[System.Drawing.Size]::new(490,28)
 $form.Controls.Add($serverHeading)
 $serverPending=[System.Windows.Forms.Label]::new()
@@ -57,7 +57,7 @@ $toggle.ForeColor=[System.Drawing.Color]::White
 $toggle.Cursor=[System.Windows.Forms.Cursors]::Hand
 $form.Controls.Add($toggle)
 $note=[System.Windows.Forms.Label]::new()
-$note.Text="服务器连续 10 秒无待传数据后，自动停止接收。`n关闭窗口会退出整个程序，不保留后台接收或查询。"
+$note.Text="连续 10 秒无待同步数据后，自动停止接收。`n关闭窗口退出所有本机进程；长期保存模式不删服务器数据。"
 $note.ForeColor=[System.Drawing.ColorTranslator]::FromHtml('#667085')
 $note.Location=[System.Drawing.Point]::new(30,375);$note.Size=[System.Drawing.Size]::new(500,65)
 $form.Controls.Add($note)
@@ -116,7 +116,8 @@ function Update-RadioMonitor {
                 $serverPending.Text="$($radioSnapshot.server.pending_packets) 包  /  $($radioSnapshot.server.pending_observations) 条采样"
                 $serverPending.ForeColor=[System.Drawing.ColorTranslator]::FromHtml('#185ABC')
                 $radioKB=[Math]::Round($radioSnapshot.server.pending_bytes/1024,1)
-                $serverDetail.Text="待传大小：$radioKB KB    最近更新：$([DateTime]::Now.ToString('HH:mm:ss'))"
+                $radioArchive=if ($radioSnapshot.server.storage_mode -eq 'permanent') { "服务器存档：$($radioSnapshot.server.stored_packets) 包    " } else { '' }
+                $serverDetail.Text="${radioArchive}待同步：$radioKB KB    $([DateTime]::Now.ToString('HH:mm:ss'))"
             } else {throw 'Server query failed.'}
         } catch {
             $serverPending.Text='未知（查询失败）'

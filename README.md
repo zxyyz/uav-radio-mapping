@@ -6,7 +6,7 @@
 
 论文稿件：[Prototype of Joint CKM and 3D Environment Reconstruction System via UAV RF Measurements（PDF）](docs/papers/Prototype_of_Joint_CKM_and_3D_Environment_Reconstruction_System_via_UAV_RF_Measurements.pdf)。后续算法重构以此稿件为依据。
 
-**当前阶段：本地几何数据库与无线测量接收。** 已实现 SQLite 几何存储、合成示例，以及无线 JSON 接收、HTTPS 中转暂存、电脑取回和 Windows 桌面控制。定位/实验原点条件不齐的测量先可靠暂存；接收成功不等于已导入标准观测表。点云处理、历史定位补齐、回放与论文算法重构仍待后续开发。
+**当前阶段：本地几何数据库与无线测量接收。** 已实现 SQLite 几何存储、合成示例，以及无线 JSON 接收、服务器长期保存与电脑同步、可选 HTTPS 中转和 Windows 桌面控制。定位/实验原点条件不齐的测量先可靠暂存；接收成功不等于已导入标准观测表。点云处理、历史定位补齐、回放与论文算法重构仍待后续开发。
 
 接收程序和部署步骤见 [接收与中转说明](docs/radio-receiver.md)，源码位于 [`tools/radio_receiver/`](tools/radio_receiver/)。配置模板不含真实地址、认证密钥、采集记录或 DJI 应用凭据。
 

@@ -6,9 +6,9 @@
 
 | 文件 | 用途 |
 | --- | --- |
-| `server.py` | 本机 HTTP 接口、SQLite 接收暂存、满足条件后的标准库导入 |
+| `server.py` | 服务器/本机 HTTP 接收、长期存储、只读同步导出、条件满足后的标准库导入 |
 | `relay_server.py` | 公网 HTTPS 中转、离线队列、回执删除及待传统计 |
-| `relay_client.py` | 电脑主动取回包，本机持久化成功后回执 |
+| `relay_client.py` | 电脑主动同步并保留服务器数据，或显式选择旧中转回执模式 |
 | `runtime_config.py` | 私有配置读取、相对路径和配置模板检查 |
 | `relay_status.py` / `receiver_status.py` | 中转队列与本机数据库状态 |
 | `RadioRelay-Control.ps1` | Windows 桌面控制、队列计数、关闭窗口清理 |
@@ -21,7 +21,7 @@
 ```powershell
 New-Item -ItemType Directory -Force local/radio_receiver
 Copy-Item tools/radio_receiver/examples/receiver.example.json local/radio_receiver/receiver.private.json
-Copy-Item tools/radio_receiver/examples/relay-client.example.json local/radio_receiver/relay-client.private.json
+Copy-Item tools/radio_receiver/examples/sync-client.example.json local/radio_receiver/relay-client.private.json
 # 编辑私有配置，替换 token、relay_url 和证书路径。
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/radio_receiver/Install-Desktop.ps1
 ```
